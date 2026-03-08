@@ -263,9 +263,10 @@ FROM FarmersInsuranceData;
 -- 	[3 Marks]
 -- ###
 -- TYPE YOUR CODE BELOW >
-
-
-
+-- assigning row numbers ranked by how many farmers are covered, highest first
+SELECT *,
+    ROW_NUMBER() OVER (ORDER BY TotalFarmersCovered DESC) AS row_num
+FROM farmersinsurancedata;
 
 -- ###
 
@@ -274,8 +275,13 @@ FROM FarmersInsuranceData;
 -- 	[3 Marks]
 -- ###
 -- TYPE YOUR CODE BELOW >
-
-
+-- ranking districts by sum insured within each state (states are already stored alphabetically)
+SELECT
+	srcStateName,
+    srcDistrictName,
+    SumInsured,
+    RANK() OVER (PARTITION BY srcStateName ORDER BY SumInsured DESC) AS district_rank
+FROM farmersinsurancedata;
 
 -- ###
 
@@ -284,9 +290,17 @@ FROM FarmersInsuranceData;
 -- 	[4 Marks]
 -- ###
 -- TYPE YOUR CODE BELOW >
-
-
-
+-- cumulative premium per district over the years, resetting for each state
+SELECT
+	srcStateName,
+    srcDistrictName,
+    srcYear,
+    FarmersPremiumAmount,
+    SUM(FarmersPremiumAmount) OVER (
+		PARTITION BY srcStateName, srcDistrictName 
+        ORDER BY srcYear ASC
+	) AS cumulative_premium
+FROM farmersinsurancedata;
 
 -- ###
 
@@ -301,9 +315,17 @@ FROM FarmersInsuranceData;
 -- 	[2 Marks]
 -- ###
 -- TYPE YOUR CODE BELOW >
+-- creating states first since districts will reference it
+CREATE TABLE IF NOT EXISTS states (
+	StateCode INT PRIMARY KEY,
+    StateName VARCHAR(255)
+);
 
-
-
+CREATE TABLE IF NOT EXISTS districts (
+	DistrictCode INT PRIMARY KEY,
+    DistrictName VARCHAR(255),
+    StateCode INT
+);
 
 -- ###
 
@@ -312,9 +334,10 @@ FROM FarmersInsuranceData;
 -- 	[2 Marks]
 -- ###
 -- TYPE YOUR CODE BELOW >
-
-
-
+-- linking districts back to states via StateCode
+ALTER TABLE districts
+ADD CONSTRAINT fk_state
+FOREIGN KEY (StateCode) REFERENCES states(StateCode);
 
 -- ###
 
